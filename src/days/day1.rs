@@ -30,29 +30,31 @@ pub struct Day1 {
 
 impl Day1 {}
 
-fn get_number_from_line(line: &str) -> Result<u32, ()> {
+fn get_number_from_line(line: &str) -> u32 {
     let mut digits = line.chars().filter(|c| c.is_numeric());
-    let first_digit = digits.next().ok_or(())?.to_digit(10).ok_or(())?;
+    let first_digit = digits
+        .next()
+        .expect(&format!("no digit on line {}", line))
+        .to_digit(10)
+        .unwrap();
     let last_digit = match digits.last() {
         None => first_digit,
-        Some(c) => c.to_digit(10).ok_or(())?,
+        Some(c) => c.to_digit(10).unwrap(),
     };
-    let result = 10 * first_digit + last_digit;
-    Ok(result)
+    10 * first_digit + last_digit
 }
 
-fn get_number_from_line2(line: &str) -> Result<u32, ()> {
+fn get_number_from_line2(line: &str) -> u32 {
     let digits = extract_numbers_from_string(line, &EXTRACT_WORDS);
-    let first_digit = digits.first().ok_or(())?;
+    let first_digit = digits.first().expect(&format!("no digit on line {}", line));
     let last_digit = match digits.last() {
         None => first_digit,
         Some(c) => c,
     };
-    let result = 10 * first_digit + last_digit;
-    Ok(result)
+    10 * first_digit + last_digit
 }
 
-fn extract_numbers_from_string<'a>(line: &str, to_extract: &'a [(&str, u32)]) -> Vec<u32> {
+fn extract_numbers_from_string(line: &str, to_extract: &[(&str, u32)]) -> Vec<u32> {
     let mut cut_line = line.to_string();
     let mut extracted = vec![];
     while !cut_line.is_empty() {
@@ -62,7 +64,6 @@ fn extract_numbers_from_string<'a>(line: &str, to_extract: &'a [(&str, u32)]) ->
         if let Some((_, value)) = extract {
             extracted.push(*value)
         }
-
         cut_line.remove(0);
     }
     extracted
@@ -81,10 +82,7 @@ impl Day for Day1 {
         let result: u32 = self
             .document_lines
             .iter()
-            .map(|line| {
-                get_number_from_line(line)
-                    .expect(&format!("there should be two digits on line : {}", line))
-            })
+            .map(|line| get_number_from_line(line))
             .sum();
         result.to_string()
     }
@@ -93,10 +91,7 @@ impl Day for Day1 {
         let result: u32 = self
             .document_lines
             .iter()
-            .map(|line| {
-                get_number_from_line2(line)
-                    .expect(&format!("there should be two digits on line : {}", line))
-            })
+            .map(|line| get_number_from_line2(line))
             .sum();
         result.to_string()
     }
