@@ -9,20 +9,23 @@ fn time_function(f: impl Fn() -> String) -> (String, Duration) {
     (f(), now.elapsed())
 }
 
+fn choose_unit(duration: Duration) -> (u128, String) {
+    if duration < Duration::from_millis(10) {
+        (duration.as_micros(), "µs".to_string())
+    } else if duration < Duration::from_secs(10) {
+        (duration.as_millis(), "ms".to_string())
+    } else {
+        (duration.as_secs() as u128, "s".to_string())
+    }
+}
 fn run_day(day: impl Day) {
     let (result1, duration1) = time_function(|| day.solution1());
-    println!("The result is {}", result1);
-    println!(
-        "It took {} microseconds to run the function !",
-        duration1.as_micros()
-    );
+    let (time1, unit1) = choose_unit(duration1);
+    println!("Solution 1 : {} ({}{})", result1, time1, unit1);
 
     let (result2, duration2) = time_function(|| day.solution2());
-    println!("The result is {}", result2);
-    println!(
-        "It took {} microseconds to run the function !",
-        duration2.as_micros()
-    );
+    let (time2, unit2) = choose_unit(duration2);
+    println!("Solution 2 : {} ({}{})", result2, time2, unit2);
 }
 
 fn main() {
