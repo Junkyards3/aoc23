@@ -28,13 +28,11 @@ pub struct Day1 {
     document_lines: Vec<String>,
 }
 
-impl Day1 {}
-
 fn get_number_from_line(line: &str) -> u32 {
     let mut digits = line.chars().filter(|c| c.is_numeric());
     let first_digit = digits
         .next()
-        .expect(&format!("no digit on line {}", line))
+        .unwrap_or_else(|| panic!("no digit on line {}", line))
         .to_digit(10)
         .unwrap();
     let last_digit = match digits.last() {
@@ -46,7 +44,9 @@ fn get_number_from_line(line: &str) -> u32 {
 
 fn get_number_from_line2(line: &str) -> u32 {
     let digits = extract_numbers_from_string(line, &EXTRACT_WORDS);
-    let first_digit = digits.first().expect(&format!("no digit on line {}", line));
+    let first_digit = digits
+        .first()
+        .unwrap_or_else(|| panic!("no digit on line {}", line));
     let last_digit = match digits.last() {
         None => first_digit,
         Some(c) => c,
