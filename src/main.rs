@@ -1,4 +1,4 @@
-use crate::days::{day1::Day1, Day};
+use crate::days::{day1::Day1, day2::Day2, Day};
 use std::fs::File;
 use std::time::{Duration, Instant};
 
@@ -43,6 +43,7 @@ fn main() {
 
     match day_number {
         "1" => run_day(Day1::make_day(input)),
-        _ => panic!("No day specified"),
+        "2" => run_day(Day2::make_day(input)),
+        _ => panic!("day not found"),
     };
 }
