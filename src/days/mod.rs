@@ -2,6 +2,7 @@ use std::fs::File;
 
 pub(crate) mod day1;
 pub(crate) mod day2;
+pub(crate) mod day3;
 
 pub trait Day {
     fn make_day(file: File) -> Self;
