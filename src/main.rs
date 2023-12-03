@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 mod days;
 
-fn time_function(f: impl Fn() -> String) -> (String, Duration) {
+fn time_function<T>(f: impl FnOnce() -> T) -> (T, Duration) {
     let now = Instant::now();
     (f(), now.elapsed())
 }
@@ -18,7 +18,11 @@ fn choose_unit(duration: Duration) -> (u128, String) {
         (duration.as_secs() as u128, "s".to_string())
     }
 }
-fn run_day(day: impl Day) {
+
+fn run_day(day: impl Day, duration: Duration) {
+    let (time_parse, unit_parse) = choose_unit(duration);
+    println!("Parse time : {}{}\n", time_parse, unit_parse);
+
     let (result1, duration1) = time_function(|| day.solution1());
     let (time1, unit1) = choose_unit(duration1);
     println!("Solution 1 : {} ({}{})", result1, time1, unit1);
@@ -26,6 +30,13 @@ fn run_day(day: impl Day) {
     let (result2, duration2) = time_function(|| day.solution2());
     let (time2, unit2) = choose_unit(duration2);
     println!("Solution 2 : {} ({}{})", result2, time2, unit2);
+}
+
+macro_rules! run_day {
+    ($day_struct:ty, $input:ident) => {
+        let (day, duration) = time_function(move || <$day_struct>::make_day($input));
+        run_day(day, duration);
+    };
 }
 
 fn main() {
@@ -42,9 +53,15 @@ fn main() {
     let input = File::open(path_input).expect("File not found");
 
     match day_number {
-        "1" => run_day(Day1::make_day(input)),
-        "2" => run_day(Day2::make_day(input)),
-        "3" => run_day(Day3::make_day(input)),
+        "1" => {
+            run_day!(Day1, input);
+        }
+        "2" => {
+            run_day!(Day2, input);
+        }
+        "3" => {
+            run_day!(Day3, input);
+        }
         _ => panic!("day not found"),
     };
 }
