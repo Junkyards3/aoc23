@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufRead;
 use std::str::FromStr;
@@ -74,16 +73,14 @@ impl Day for Day4 {
     }
 
     fn solution2(&self) -> String {
-        let mut nb_cards: HashMap<usize, u32> = HashMap::with_capacity(self.cards.len());
+        let mut nb_cards = vec![1; self.cards.len()];
         for (card_index, card) in self.cards.iter().enumerate() {
-            let nb_card = *nb_cards.entry(card_index).or_insert(1);
-            (1..=card.compute_number_of_winning_in_found_numbers()).for_each(|card_offset| {
-                *nb_cards
-                    .entry(card_index + card_offset as usize)
-                    .or_insert(1) += nb_card;
-            })
+            let nb_card = nb_cards[card_index];
+            for card_offset in 1..=card.compute_number_of_winning_in_found_numbers() {
+                nb_cards[card_index + card_offset as usize] += nb_card;
+            }
         }
-        let result: u32 = nb_cards.values().sum();
+        let result: u32 = nb_cards.iter().sum();
         result.to_string()
     }
 }
