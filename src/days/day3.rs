@@ -169,14 +169,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_day1_sol1() {
+    fn test_day3_sol1() {
         let input = File::open("./inputs/day3/input_test.txt").expect("File not found");
         let day3 = Day3::make_day(input);
         assert_eq!(day3.solution1(), "4361");
     }
 
     #[test]
-    fn test_day1_sol2() {
+    fn test_day3_sol2() {
         let input = File::open("./inputs/day3/input_test.txt").expect("File not found");
         let day3 = Day3::make_day(input);
         assert_eq!(day3.solution2(), "467835");

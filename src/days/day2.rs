@@ -125,7 +125,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_day1_sol1() {
+    fn test_day2_sol1() {
         let games = [
             "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
             "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue",
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_day1_sol2() {
+    fn test_day2_sol2() {
         let games = [
             "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green",
             "Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue",
