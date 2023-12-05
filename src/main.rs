@@ -1,4 +1,4 @@
-use crate::days::{day1::Day1, day2::Day2, day3::Day3, day4::Day4, Day};
+use crate::days::{day1::Day1, day2::Day2, day3::Day3, day4::Day4, day5::Day5, Day};
 use std::fs::File;
 use std::time::{Duration, Instant};
 
@@ -64,6 +64,9 @@ fn main() {
         }
         "4" => {
             run_day!(Day4, input);
+        }
+        "5" => {
+            run_day!(Day5, input);
         }
         _ => panic!("day not found"),
     };
