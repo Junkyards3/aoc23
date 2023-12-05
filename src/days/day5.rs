@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::days::Day;
 
-type Quantity = u32;
+type Quantity = u64;
 
 pub struct Day5 {
     start_seeds: Vec<Quantity>,
@@ -12,11 +12,27 @@ pub struct Day5 {
 }
 
 impl Day5 {
-    fn get_range_seeds(&self) -> Vec<Quantity> {
+    fn contains_seed(&self, seed: Quantity) -> bool {
         self.start_seeds
             .chunks(2)
-            .flat_map(|chunk| (chunk[0]..chunk[0] + chunk[1]))
-            .collect()
+            .any(|chunk| (chunk[0]..chunk[0] + chunk[1]).contains(&seed))
+    }
+
+    fn convert_quantity(&self, seed: Quantity) -> Quantity {
+        self.transformers
+            .iter()
+            .fold(seed, |curr_quantity, transformer| {
+                transformer.convert_quantity(curr_quantity)
+            })
+    }
+
+    fn convert_quantity_reverse(&self, location: Quantity) -> Quantity {
+        self.transformers
+            .iter()
+            .rev()
+            .fold(location, |curr_quantity, transformer| {
+                transformer.convert_quantity_reverse(curr_quantity)
+            })
     }
 }
 #[derive(Debug)]
@@ -36,9 +52,21 @@ impl Transformer {
         }
         quantity
     }
+
+    fn convert_quantity_reverse(&self, quantity: Quantity) -> Quantity {
+        for transformer_line in self.transformer_lines.iter() {
+            if quantity >= transformer_line.destination_start
+                && quantity < transformer_line.destination_start + transformer_line.length
+            {
+                return quantity + transformer_line.source_start
+                    - transformer_line.destination_start;
+            }
+        }
+        quantity
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct TransformerLine {
     destination_start: Quantity,
     source_start: Quantity,
@@ -91,6 +119,7 @@ impl Day for Day5 {
                     );
                     index += 1;
                 }
+                transformer_lines.sort_unstable_by_key(|tr: &TransformerLine| tr.source_start);
                 transformers.push(Transformer { transformer_lines });
             }
         }
@@ -104,31 +133,21 @@ impl Day for Day5 {
         let result = self
             .start_seeds
             .iter()
-            .map(|seed| {
-                self.transformers
-                    .iter()
-                    .fold(*seed, |curr_quantity, transformer| {
-                        transformer.convert_quantity(curr_quantity)
-                    })
-            })
+            .map(|seed| self.convert_quantity(*seed))
             .min()
             .expect("there is at least one seed");
         result.to_string()
     }
 
     fn solution2(&self) -> String {
-        let result = self
-            .get_range_seeds()
-            .iter()
-            .map(|seed| {
-                self.transformers
-                    .iter()
-                    .fold(*seed, |curr_quantity, transformer| {
-                        transformer.convert_quantity(curr_quantity)
-                    })
-            })
-            .min()
-            .expect("there is at least one seed");
+        let mut result = 0;
+        loop {
+            let seed = self.convert_quantity_reverse(result);
+            if self.contains_seed(seed) {
+                break;
+            }
+            result += 1;
+        }
         result.to_string()
     }
 }
@@ -149,5 +168,15 @@ mod tests {
         let input = File::open("./inputs/day5/input_test.txt").expect("File not found");
         let day5 = Day5::make_day(input);
         assert_eq!(day5.solution2(), "46");
+    }
+
+    #[test]
+    fn test_day5_reverse() {
+        let input = File::open("./inputs/day5/input.txt").expect("File not found");
+        let day5 = Day5::make_day(input);
+        for seed in 0..100 {
+            let location = day5.convert_quantity(seed);
+            assert_eq!(day5.convert_quantity_reverse(location), seed);
+        }
     }
 }
