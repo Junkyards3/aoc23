@@ -12,31 +12,10 @@ pub struct Day6 {
     distances: Vec<Distance>,
 }
 
-fn get_inner_interval(race_time: Time, race_distance: Distance) -> (Time, Time) {
+fn get_inner_interval_size(race_time: Time, race_distance: Distance) -> Time {
     match find_roots_quadratic(1f64, -(race_time as f64), race_distance as f64) {
-        Roots::Two([a, b]) => (
-            approx_start(a, race_time, race_distance),
-            approx_end(b, race_time, race_distance),
-        ),
+        Roots::Two([a, b]) => b.ceil() as Time - a.floor() as Time - 1,
         _ => panic!("should be a way to beat the course"),
-    }
-}
-
-fn approx_start(start: f64, race_time: Time, race_distance: Distance) -> Time {
-    let start_int = start.floor() as i64;
-    if (race_time - start_int) * start_int <= race_distance {
-        start_int + 1
-    } else {
-        start_int
-    }
-}
-
-fn approx_end(start: f64, race_time: Time, race_distance: Distance) -> Time {
-    let end_int = start.ceil() as i64;
-    if (race_time - end_int) * end_int <= race_distance {
-        end_int - 1
-    } else {
-        end_int
     }
 }
 
@@ -61,10 +40,7 @@ impl Day for Day6 {
             .times
             .iter()
             .zip(self.distances.iter())
-            .map(|(time, distance)| {
-                let (a, b) = get_inner_interval(*time, *distance);
-                b + 1 - a
-            })
+            .map(|(time, distance)| get_inner_interval_size(*time, *distance))
             .product::<Time>();
         result.to_string()
     }
@@ -86,8 +62,7 @@ impl Day for Day6 {
             .expect("there is an elem")
             .parse()
             .expect("is a number");
-        let (a, b) = get_inner_interval(time, distance);
-        (b + 1 - a).to_string()
+        get_inner_interval_size(time, distance).to_string()
     }
 }
 
