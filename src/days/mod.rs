@@ -5,6 +5,7 @@ pub(crate) mod day2;
 pub(crate) mod day3;
 pub(crate) mod day4;
 pub(crate) mod day5;
+pub(crate) mod day6;
 
 pub trait Day {
     fn make_day(file: File) -> Self;
