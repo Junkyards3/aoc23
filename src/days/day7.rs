@@ -22,12 +22,9 @@ pub struct Day7 {
 
 #[derive(Debug, Clone)]
 struct Hand {
-    cards: HandCards,
+    cards: [Card; 5],
     bid: Bid,
 }
-
-#[derive(Debug, Eq, PartialEq, Clone)]
-struct HandCards([Card; 5]);
 
 fn char_to_card(c: char) -> Result<Card, ()> {
     if ('2'..='9').contains(&c) {
@@ -56,16 +53,16 @@ fn compute_card_numbers_from_cards_map(cards_map: [usize; 15]) -> (usize, usize)
     (card_numbers.next().unwrap(), card_numbers.next().unwrap())
 }
 
-impl HandCards {
+impl Hand {
     fn compute_hand_hex_value(&self) -> String {
-        self.0
+        self.cards
             .iter()
             .map(|d| VALUE_TO_HEX_CLASSIC[*d as usize])
             .collect::<String>()
     }
 
     fn compute_hand_hex_value_joker(&self) -> String {
-        self.0
+        self.cards
             .iter()
             .map(|d| VALUE_TO_HEX_JOKER[*d as usize])
             .collect::<String>()
@@ -73,7 +70,7 @@ impl HandCards {
 
     fn compute_hand_power(&self) -> u32 {
         let mut cards_map = [0; 15];
-        for card in self.0.iter() {
+        for card in self.cards.iter() {
             cards_map[*card as usize] += 1;
         }
         let (max_card_number, second_max_card_number) =
@@ -87,7 +84,7 @@ impl HandCards {
     fn compute_hand_power_joker(&self) -> u32 {
         let mut cards_map = [0; 15];
         let mut nb_jokers = 0;
-        for card in self.0.iter() {
+        for card in self.cards.iter() {
             if *card == JOKER {
                 nb_jokers += 1;
             } else {
@@ -109,11 +106,11 @@ impl FromStr for Hand {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (cards_str, bid_str) = s.split_once(' ').ok_or("should have a whitespace")?;
-        let mut cards = HandCards([0; 5]);
+        let mut cards = [0; 5];
         cards_str
             .chars()
             .enumerate()
-            .for_each(|(idx, c)| cards.0[idx] = char_to_card(c).expect("should be card char"));
+            .for_each(|(idx, c)| cards[idx] = char_to_card(c).expect("should be card char"));
         let bid = bid_str.parse().map_err(|_| "should be number")?;
         let hand = Hand { cards, bid };
         Ok(hand)
@@ -150,7 +147,7 @@ impl Day for Day7 {
         let mut hands_sorted = self
             .hands
             .iter()
-            .map(|hand| (hand, hand.cards.compute_hand_power()))
+            .map(|hand| (hand, hand.compute_hand_power()))
             .collect::<Vec<_>>();
         hands_sorted.sort_unstable_by_key(|(_, power)| *power);
         let result: u64 = hands_sorted
@@ -165,7 +162,7 @@ impl Day for Day7 {
         let mut hands_sorted = self
             .hands
             .iter()
-            .map(|hand| (hand, hand.cards.compute_hand_power_joker()))
+            .map(|hand| (hand, hand.compute_hand_power_joker()))
             .collect::<Vec<_>>();
         hands_sorted.sort_unstable_by_key(|(_, power)| *power);
         let result: u64 = hands_sorted
