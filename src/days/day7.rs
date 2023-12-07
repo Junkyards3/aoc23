@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::fs::File;
 use std::io::BufRead;
 use std::str::FromStr;
@@ -6,6 +5,12 @@ use std::str::FromStr;
 use crate::days::Day;
 
 const JOKER: u8 = 11;
+const VALUE_TO_HEX_CLASSIC: [char; 15] = [
+    ' ', ' ', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+];
+const VALUE_TO_HEX_JOKER: [char; 15] = [
+    ' ', ' ', '2', '3', '4', '5', '6', '7', '8', '9', 'A', '0', 'C', 'D', 'E',
+];
 
 type Card = u8;
 type Bid = u64;
@@ -40,27 +45,30 @@ fn char_to_card(c: char) -> Result<Card, ()> {
 }
 
 impl HandCards {
-    fn compute_hand_type(&self) -> HandType {
+    fn compute_hand_power(&self) -> u32 {
         let mut cards_map = vec![0; 15];
         for card in self.0.iter() {
             cards_map[*card as usize] += 1;
         }
-        let mut retrieved_values = cards_map.iter().filter(|x| **x >= 1).collect::<Vec<_>>();
+        let mut retrieved_values = cards_map
+            .iter()
+            .filter(|x| **x >= 1)
+            .collect::<Vec<&usize>>();
         retrieved_values.sort_unstable();
         retrieved_values.reverse();
-        match (retrieved_values[0], retrieved_values.get(1).unwrap_or(&&0)) {
-            (5, 0) => HandType::Five,
-            (4, 1) => HandType::Four,
-            (3, 2) => HandType::FullHouse,
-            (3, 1) => HandType::Three,
-            (2, 2) => HandType::TwoPair,
-            (2, 1) => HandType::OnePair,
-            (1, 1) => HandType::HighCard,
-            _ => panic!("invalid hand"),
-        }
+        let max_num_cards = **retrieved_values.get(0).unwrap_or(&&0);
+        let second_max_num_cards = **retrieved_values.get(1).unwrap_or(&&0);
+        let char_hand_type = get_hex_power_from_nb_cards(max_num_cards, second_max_num_cards);
+        let hex_from_hand_values = self
+            .0
+            .iter()
+            .map(|d| VALUE_TO_HEX_CLASSIC[*d as usize])
+            .collect::<String>();
+        u32::from_str_radix(&format!("{}{}", char_hand_type, hex_from_hand_values), 16)
+            .expect("is not hex number")
     }
 
-    fn compute_hand_type_joker(&self) -> HandType {
+    fn compute_hand_power_joker(&self) -> u32 {
         let mut cards_map = vec![0; 15];
         let mut nb_jokers = 0;
         for card in self.0.iter() {
@@ -70,44 +78,22 @@ impl HandCards {
                 cards_map[*card as usize] += 1;
             }
         }
-        let mut retrieved_values = cards_map.iter().filter(|x| **x >= 1).collect::<Vec<_>>();
+        let mut retrieved_values = cards_map
+            .iter()
+            .filter(|x| **x >= 1)
+            .collect::<Vec<&usize>>();
         retrieved_values.sort_unstable();
         retrieved_values.reverse();
-        match (
-            5.min(**retrieved_values.get(0).unwrap_or(&&0) + nb_jokers),
-            retrieved_values.get(1).unwrap_or(&&0),
-        ) {
-            (5, 0) => HandType::Five,
-            (4, 1) => HandType::Four,
-            (3, 2) => HandType::FullHouse,
-            (3, 1) => HandType::Three,
-            (2, 2) => HandType::TwoPair,
-            (2, 1) => HandType::OnePair,
-            (1, 1) => HandType::HighCard,
-            _ => panic!("invalid hand"),
-        }
-    }
-
-    fn compare(&self, other: &Self, use_joker: bool) -> Ordering {
-        let type_ordering = if use_joker {
-            self.compute_hand_type_joker()
-                .cmp(&other.compute_hand_type_joker())
-        } else {
-            self.compute_hand_type().cmp(&other.compute_hand_type())
-        };
-        if type_ordering.is_ne() {
-            return type_ordering;
-        } else {
-            for (card1, card2) in self.0.iter().zip(other.0.iter()) {
-                let card1_value = if *card1 == JOKER { 0 } else { *card1 };
-                let card2_value = if *card2 == JOKER { 0 } else { *card2 };
-                let card_ordering = card1_value.cmp(&card2_value);
-                if card_ordering.is_ne() {
-                    return card_ordering;
-                }
-            }
-            type_ordering
-        }
+        let max_num_cards = **retrieved_values.get(0).unwrap_or(&&0) + nb_jokers;
+        let second_max_num_cards = **retrieved_values.get(1).unwrap_or(&&0);
+        let char_hand_type = get_hex_power_from_nb_cards(max_num_cards, second_max_num_cards);
+        let hex_from_hand_values = self
+            .0
+            .iter()
+            .map(|d| VALUE_TO_HEX_JOKER[*d as usize])
+            .collect::<String>();
+        u32::from_str_radix(&format!("{}{}", char_hand_type, hex_from_hand_values), 16)
+            .expect("is not hex number")
     }
 }
 
@@ -127,15 +113,17 @@ impl FromStr for Hand {
     }
 }
 
-#[derive(Ord, PartialOrd, Eq, PartialEq)]
-enum HandType {
-    HighCard,
-    OnePair,
-    TwoPair,
-    Three,
-    FullHouse,
-    Four,
-    Five,
+fn get_hex_power_from_nb_cards(nb_max: usize, nb_second_max: usize) -> char {
+    match (nb_max, nb_second_max) {
+        (5, 0) => '6',
+        (4, 1) => '5',
+        (3, 2) => '4',
+        (3, 1) => '3',
+        (2, 2) => '2',
+        (2, 1) => '1',
+        (1, 1) => '0',
+        _ => panic!("invalid card numbers for a hand"),
+    }
 }
 
 impl Day for Day7 {
@@ -152,23 +140,31 @@ impl Day for Day7 {
     }
 
     fn solution1(&self) -> String {
-        let mut hands_sorted = self.hands.clone();
-        hands_sorted.sort_unstable_by(|hand1, hand2| hand1.cards.compare(&hand2.cards, false));
+        let mut hands_sorted = self
+            .hands
+            .iter()
+            .map(|hand| (hand, hand.cards.compute_hand_power()))
+            .collect::<Vec<_>>();
+        hands_sorted.sort_unstable_by_key(|(_, power)| *power);
         let result: u64 = hands_sorted
             .iter()
             .enumerate()
-            .map(|(idx, hand)| (idx + 1) as u64 * hand.bid)
+            .map(|(idx, (hand, _))| (idx + 1) as u64 * hand.bid)
             .sum();
         result.to_string()
     }
 
     fn solution2(&self) -> String {
-        let mut hands_sorted = self.hands.clone();
-        hands_sorted.sort_unstable_by(|hand1, hand2| hand1.cards.compare(&hand2.cards, true));
+        let mut hands_sorted = self
+            .hands
+            .iter()
+            .map(|hand| (hand, hand.cards.compute_hand_power_joker()))
+            .collect::<Vec<_>>();
+        hands_sorted.sort_unstable_by_key(|(_, power)| *power);
         let result: u64 = hands_sorted
             .iter()
             .enumerate()
-            .map(|(idx, hand)| (idx + 1) as u64 * hand.bid)
+            .map(|(idx, (hand, _))| (idx + 1) as u64 * hand.bid)
             .sum();
         result.to_string()
     }
