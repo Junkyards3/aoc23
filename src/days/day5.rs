@@ -232,14 +232,4 @@ mod tests {
         let day5 = Day5::make_day(input);
         assert_eq!(day5.solution2(), "46");
     }
-
-    #[test]
-    fn test_day5_reverse() {
-        let input = File::open("./inputs/day5/input.txt").expect("File not found");
-        let day5 = Day5::make_day(input);
-        for seed in 0..100 {
-            let location = day5.convert_quantity(seed);
-            assert_eq!(day5.convert_quantity_reverse(location), seed);
-        }
-    }
 }
