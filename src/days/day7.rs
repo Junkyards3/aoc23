@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::BufRead;
+use std::iter;
 use std::str::FromStr;
 
 use crate::days::Day;
@@ -44,32 +45,47 @@ fn char_to_card(c: char) -> Result<Card, ()> {
     }
 }
 
+fn compute_card_numbers_from_cards_map(cards_map: [usize; 15]) -> (usize, usize) {
+    let mut retrieved_values = cards_map
+        .into_iter()
+        .filter(|x| *x >= 1)
+        .collect::<Vec<usize>>();
+    retrieved_values.sort_unstable();
+    retrieved_values.reverse();
+    let mut card_numbers = retrieved_values.into_iter().take(2).chain(iter::repeat(0));
+    (card_numbers.next().unwrap(), card_numbers.next().unwrap())
+}
+
 impl HandCards {
+    fn compute_hand_hex_value(&self) -> String {
+        self.0
+            .iter()
+            .map(|d| VALUE_TO_HEX_CLASSIC[*d as usize])
+            .collect::<String>()
+    }
+
+    fn compute_hand_hex_value_joker(&self) -> String {
+        self.0
+            .iter()
+            .map(|d| VALUE_TO_HEX_JOKER[*d as usize])
+            .collect::<String>()
+    }
+
     fn compute_hand_power(&self) -> u32 {
-        let mut cards_map = vec![0; 15];
+        let mut cards_map = [0; 15];
         for card in self.0.iter() {
             cards_map[*card as usize] += 1;
         }
-        let mut retrieved_values = cards_map
-            .iter()
-            .filter(|x| **x >= 1)
-            .collect::<Vec<&usize>>();
-        retrieved_values.sort_unstable();
-        retrieved_values.reverse();
-        let max_num_cards = **retrieved_values.get(0).unwrap_or(&&0);
-        let second_max_num_cards = **retrieved_values.get(1).unwrap_or(&&0);
-        let char_hand_type = get_hex_power_from_nb_cards(max_num_cards, second_max_num_cards);
-        let hex_from_hand_values = self
-            .0
-            .iter()
-            .map(|d| VALUE_TO_HEX_CLASSIC[*d as usize])
-            .collect::<String>();
+        let (max_card_number, second_max_card_number) =
+            compute_card_numbers_from_cards_map(cards_map);
+        let char_hand_type = get_hex_power_from_nb_cards(max_card_number, second_max_card_number);
+        let hex_from_hand_values = self.compute_hand_hex_value();
         u32::from_str_radix(&format!("{}{}", char_hand_type, hex_from_hand_values), 16)
             .expect("is not hex number")
     }
 
     fn compute_hand_power_joker(&self) -> u32 {
-        let mut cards_map = vec![0; 15];
+        let mut cards_map = [0; 15];
         let mut nb_jokers = 0;
         for card in self.0.iter() {
             if *card == JOKER {
@@ -78,20 +94,11 @@ impl HandCards {
                 cards_map[*card as usize] += 1;
             }
         }
-        let mut retrieved_values = cards_map
-            .iter()
-            .filter(|x| **x >= 1)
-            .collect::<Vec<&usize>>();
-        retrieved_values.sort_unstable();
-        retrieved_values.reverse();
-        let max_num_cards = **retrieved_values.get(0).unwrap_or(&&0) + nb_jokers;
-        let second_max_num_cards = **retrieved_values.get(1).unwrap_or(&&0);
-        let char_hand_type = get_hex_power_from_nb_cards(max_num_cards, second_max_num_cards);
-        let hex_from_hand_values = self
-            .0
-            .iter()
-            .map(|d| VALUE_TO_HEX_JOKER[*d as usize])
-            .collect::<String>();
+        let (max_card_number, second_max_card_number) =
+            compute_card_numbers_from_cards_map(cards_map);
+        let char_hand_type =
+            get_hex_power_from_nb_cards(max_card_number + nb_jokers, second_max_card_number);
+        let hex_from_hand_values = self.compute_hand_hex_value_joker();
         u32::from_str_radix(&format!("{}{}", char_hand_type, hex_from_hand_values), 16)
             .expect("is not hex number")
     }
