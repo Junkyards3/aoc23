@@ -1,8 +1,11 @@
 use crate::days::{
-    day1::Day1, day2::Day2, day3::Day3, day4::Day4, day5::Day5, day6::Day6, day7::Day7, Day,
+    day1::Day1, day2::Day2, day3::Day3, day4::Day4, day5::Day5, day6::Day6, day7::Day7, day8::Day8,
+    Day,
 };
-use std::fs::File;
-use std::time::{Duration, Instant};
+use std::{
+    fs::File,
+    time::{Duration, Instant},
+};
 
 mod days;
 
@@ -75,6 +78,9 @@ fn main() {
         }
         "7" => {
             run_day!(Day7, input);
+        }
+        "8" => {
+            run_day!(Day8, input);
         }
         _ => panic!("day not found"),
     };
