@@ -3,6 +3,7 @@ use std::fs::File;
 pub(crate) mod day1;
 pub(crate) mod day10;
 pub(crate) mod day11;
+pub(crate) mod day12;
 pub(crate) mod day2;
 pub(crate) mod day3;
 pub(crate) mod day4;
