@@ -10,7 +10,7 @@ pub struct Day14 {
     tiles: Array2<Tile>,
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 enum Tile {
     Empty,
     Square,
@@ -77,37 +77,14 @@ fn get_load(tiles: &Array2<Tile>) -> usize {
         .sum::<usize>()
 }
 
-fn get_differences(values: &[usize]) -> Vec<usize> {
-    values
-        .windows(2)
-        .map(|window| window[1] - window[0])
-        .collect()
+fn tilt_four_times(tiles: Array2<Tile>) -> Array2<Tile> {
+    let mut new_tilted = tilt(&tiles, 1, false);
+    new_tilted = tilt(&new_tilted, 0, false);
+    new_tilted = tilt(&new_tilted, 1, true);
+    new_tilted = tilt(&new_tilted, 0, true);
+    new_tilted
 }
 
-fn find_correct_value(mut map: HashMap<usize, Vec<usize>>) -> usize {
-    let size_for_constant_check = 20;
-    map.retain(|_, steps| steps.len() > 50);
-    let mut period = 0;
-    for steps in map.values() {
-        let diff = get_differences(steps);
-        let last_diff = diff.last().unwrap();
-        if diff
-            .iter()
-            .rev()
-            .take(size_for_constant_check)
-            .skip(1)
-            .all(|v| *v == *last_diff)
-        {
-            period = *last_diff;
-            break;
-        }
-    }
-    *map.iter()
-        .map(|(load, steps)| (load, steps.last().unwrap()))
-        .find(|(_, end)| (1000000000 - **end) % period == 0)
-        .unwrap()
-        .0
-}
 impl Day for Day14 {
     fn make_day(file: File) -> Self {
         let data = std::io::BufReader::new(file)
@@ -133,21 +110,28 @@ impl Day for Day14 {
     }
 
     fn solution2(&self) -> String {
-        let base_tiles = self.tiles.clone();
-        let mut map = HashMap::new();
-        let max_iter = 3000;
-        (0..max_iter).fold(base_tiles, |tilted, x| {
-            let mut new_tilted = tilt(&tilted, 1, false);
-            new_tilted = tilt(&new_tilted, 0, false);
-            new_tilted = tilt(&new_tilted, 1, true);
-            new_tilted = tilt(&new_tilted, 0, true);
-            map.entry(get_load(&new_tilted))
-                .and_modify(|e: &mut Vec<usize>| e.push(x + 1))
-                .or_insert(vec![x]);
-            new_tilted
-        });
-
-        let result = find_correct_value(map);
+        let tiles = self.tiles.clone();
+        let mut current_step = 0;
+        let period: usize;
+        let mut map_seen_tiles = HashMap::new();
+        let mut vec_seen_tiles = vec![tiles.clone()];
+        let mut curr_tilted = tiles.clone();
+        loop {
+            current_step += 1;
+            curr_tilted = tilt_four_times(curr_tilted);
+            match map_seen_tiles.get(&curr_tilted) {
+                Some(step) => {
+                    period = current_step - step;
+                    break;
+                }
+                None => {
+                    map_seen_tiles.insert(curr_tilted.clone(), current_step);
+                }
+            }
+            vec_seen_tiles.push(curr_tilted.clone());
+        }
+        let same_tiles_step = ((1000000000 - current_step) % period) + (current_step - period);
+        let result = get_load(&vec_seen_tiles[same_tiles_step]);
         result.to_string()
     }
 }
