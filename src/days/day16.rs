@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::BufRead;
 
 use ndarray::Array2;
+use rayon::prelude::*;
 
 use crate::days::Day;
 
@@ -192,6 +193,7 @@ impl Day for Day16 {
         let (nb_rows, nb_cols) = self.contraptions.dim();
         let (nb_rows, nb_cols) = (nb_rows as usize, nb_cols as usize);
         let energized_rows = (0..nb_rows)
+            .into_par_iter()
             .map(|row| {
                 max(
                     self.compute_energized_cells(Ray {
@@ -207,6 +209,7 @@ impl Day for Day16 {
             .max()
             .unwrap();
         let energized_cols = (0..nb_cols)
+            .into_par_iter()
             .map(|col| {
                 max(
                     self.compute_energized_cells(Ray {
