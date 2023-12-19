@@ -93,12 +93,12 @@ impl Day19 {
                     ComparisonType::GreaterEqual => result
                         .entry(categ)
                         .and_modify(|v| v.start = max(num, v.start)),
-                    ComparisonType::SmallerThan => result
-                        .entry(categ)
-                        .and_modify(|v| v.end = min(num - 1, v.end)),
-                    ComparisonType::SmallerEqual => {
+                    ComparisonType::SmallerThan => {
                         result.entry(categ).and_modify(|v| v.end = min(num, v.end))
                     }
+                    ComparisonType::SmallerEqual => result
+                        .entry(categ)
+                        .and_modify(|v| v.end = min(num + 1, v.end)),
                 };
             }
             RangePart {
@@ -110,17 +110,22 @@ impl Day19 {
         }
 
         let conditions = find_conditions_id("in", &conditions_by_id, &mut cache);
-        let result = conditions
+        let ranges = conditions
             .iter()
-            .map(|one_conditions| find_acceptable_ranges(one_conditions))
-            .powerset()
-            .map(|subset| {
-                RangePart::intersection_slice(&subset)
-                    .map(|range_part| range_part.compute_size())
-                    .unwrap_or(0) as i128
-                    * if subset.len() % 2 == 0 { -1 } else { 1 }
-            })
-            .sum();
+            .map(|condition| find_acceptable_ranges(condition))
+            .collect_vec();
+        let result = RangePart::compute_size_union(&ranges);
+        /*let result = conditions
+        .iter()
+        .map(|one_conditions| find_acceptable_ranges(one_conditions))
+        .powerset()
+        .map(|subset| {
+            RangePart::intersection_slice(&subset)
+                .map(|range_part| range_part.compute_size())
+                .unwrap_or(0) as i128
+                * if subset.len() % 2 == 0 { -1 } else { 1 }
+        })
+        .sum();*/
 
         result
     }
@@ -359,7 +364,7 @@ fn intersection(range1: &Range<Num>, range2: &Range<Num>) -> Range<Num> {
 }
 
 impl RangePart {
-    fn new() -> RangePart {
+    fn largest_range_part() -> RangePart {
         RangePart {
             x: 1..4001,
             m: 1..4001,
@@ -384,16 +389,44 @@ impl RangePart {
             * self.s.try_len().unwrap() as u128
     }
 
-    fn intersection_slice(range_parts: &[RangePart]) -> Option<RangePart> {
+    fn is_empty(&self) -> bool {
+        self.x.is_empty() || self.m.is_empty() || self.a.is_empty() || self.s.is_empty()
+    }
+
+    fn compute_all_intersections(range_parts: &[RangePart]) -> Vec<Vec<RangePart>> {
         if range_parts.len() == 0 {
-            None
+            vec![vec![RangePart::largest_range_part()]]
         } else {
-            Some(
-                range_parts
-                    .into_iter()
-                    .fold(RangePart::new(), |r1, r2| r1.intersection(r2)),
-            )
+            let mut previous_intersections =
+                RangePart::compute_all_intersections(&range_parts[1..]);
+            let mut new_intersections = vec![vec![]; previous_intersections.len() + 1];
+            let new_range_part = &range_parts[0];
+            for i in 0..previous_intersections.len() {
+                for intersection in previous_intersections[i].iter() {
+                    let new_intersection = new_range_part.intersection(intersection);
+                    if !new_intersection.is_empty() {
+                        new_intersections[i + 1].push(new_intersection);
+                    }
+                }
+                new_intersections[i].append(&mut previous_intersections[i]);
+            }
+            new_intersections
         }
+    }
+
+    fn compute_size_union(range_parts: &[RangePart]) -> i128 {
+        let intersections = RangePart::compute_all_intersections(&range_parts);
+        let mut result = 0;
+        let mut minus_one_power = 1;
+        for intersections_by_number in intersections.iter().skip(1) {
+            result += (intersections_by_number
+                .iter()
+                .map(|intersection| intersection.compute_size())
+                .sum::<u128>() as i128)
+                * minus_one_power;
+            minus_one_power *= -1;
+        }
+        result
     }
 }
 
