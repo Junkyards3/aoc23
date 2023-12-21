@@ -1,7 +1,7 @@
 use crate::days::{
     day1::Day1, day10::Day10, day11::Day11, day12::Day12, day13::Day13, day14::Day14, day15::Day15,
-    day16::Day16, day17::Day17, day18::Day18, day19::Day19, day2::Day2, day20::Day20, day3::Day3,
-    day4::Day4, day5::Day5, day6::Day6, day7::Day7, day8::Day8, day9::Day9, Day,
+    day16::Day16, day17::Day17, day18::Day18, day19::Day19, day2::Day2, day20::Day20, day21::Day21,
+    day3::Day3, day4::Day4, day5::Day5, day6::Day6, day7::Day7, day8::Day8, day9::Day9, Day,
 };
 use std::{
     fs::File,
@@ -118,6 +118,9 @@ fn main() {
         }
         "20" => {
             run_day!(Day20, input);
+        }
+        "21" => {
+            run_day!(Day21, input);
         }
         _ => panic!("day not found"),
     };
